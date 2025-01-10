@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interview Score Viewer</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-gray-100 p-6">
+    <div class="max-w-2xl mx-auto">
+      <h1 class="text-2xl font-bold mb-4">Interview Score Viewer</h1>
+
+      <!-- Input for Query Text -->
+      <textarea
+        id="queryText"
+        class="w-full p-2 border rounded mb-4"
+        rows="4"
+        placeholder="Enter your query text here..."
+      ></textarea>
+
+      <button id="fetchData" class="bg-blue-500 text-white px-4 py-2 rounded">
+        Fetch Interview Score
+      </button>
+
+      <div id="output" class="mt-6"></div>
+    </div>
+
+    <!-- Modal -->
+    <div
+      id="modal"
+      class="fixed inset-0 bg-gray-800 bg-opacity-50 hidden flex justify-center items-center"
+    >
+      <div
+        class="bg-white p-6 rounded-lg max-w-lg w-full max-h-96 overflow-y-auto shadow-lg"
+      >
+        <h2 class="text-xl font-bold mb-4 border-b pb-2">Example Details</h2>
+        <div id="modalContent" class="text-gray-700 space-y-4"></div>
+        <button
+          id="closeModal"
+          class="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("fetchData")
+        .addEventListener("click", async () => {
+          const queryText = document.getElementById("queryText").value;
+          if (!queryText) {
+            alert("Please enter a query text.");
+            return;
+          }
+
+          try {
+            const response = await fetch(
+              "http://localhost:1819/api/v1/get-interview-score",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query_text: queryText }),
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+
+            const data = await response.json();
+            displayOutput(data);
+          } catch (error) {
+            console.error(
+              "There was a problem with the fetch operation:",
+              error
+            );
+          }
+        });
+
+      function displayOutput(data) {
+        const outputDiv = document.getElementById("output");
+        outputDiv.innerHTML = "";
+
+        // Display scores
+        const scores = data.score;
+        const scoresDiv = document.createElement("div");
+        scoresDiv.className = "bg-white p-4 rounded-lg shadow mb-4";
+        scoresDiv.innerHTML = `
+          <h3 class="font-bold text-lg mb-2">Score Summary</h3>
+          <p>${scores.description}</p>
+          <ul class="list-disc pl-5 mt-2">
+            <li><strong>평가원 1 : 직무 수행 능력 (max score: 15):</strong> ${scores.eval_1_ability_15}</li>
+            <li><strong>평가원 1 : 직무 기초 능력 (max score: 10):</strong> ${scores.eval_1_basic_1_10}</li>
+            <li><strong>평가원 1 : 직무 기초 능력 (max score: 10):</strong> ${scores.eval_1_basic_2_10}</li>
+            <li><strong>평가원 2 : 직무 수행 능력 (max score: 15):</strong> ${scores.eval_2_ability_15}</li>
+            <li><strong>평가원 2 : 직무 기초 능력 (max score: 10):</strong> ${scores.eval_2_basic_1_10}</li>
+            <li><strong>평가원 2 : 직무 기초 능력 (max score: 10):</strong> ${scores.eval_2_basic_2_10}</li>
+            <li><strong>평가원 2 : 핵심 가치 인재상 (max score: 15):</strong> ${scores.eval_2_fit_15}</li>
+          </ul>
+        `;
+        outputDiv.appendChild(scoresDiv);
+
+        // Display examples
+        data.examples.forEach((example, index) => {
+          const card = document.createElement("div");
+          card.className = "bg-white p-4 rounded-lg shadow mb-4 cursor-pointer";
+          card.innerHTML = `
+            <h3 class="font-bold">Example ${index + 1}</h3>
+            <p>${example.question_1_answer.substring(0, 100)}...</p>
+          `;
+          card.addEventListener("click", () => showModal(example));
+          outputDiv.appendChild(card);
+        });
+      }
+
+      function showModal(example) {
+        const modal = document.getElementById("modal");
+        const modalContent = document.getElementById("modalContent");
+        modalContent.innerHTML = `
+          <p><strong>Question 1:</strong> ${example.question_1_answer}</p>
+          <p><strong>Question 2:</strong> ${example.question_2_answer}</p>
+          <p><strong>Question 3:</strong> ${example.question_3_answer}</p>
+          <p><strong>Question 4:</strong> ${example.question_4_answer}</p>
+          <div class="mt-4">
+            <h3 class="font-bold">Additional Metrics</h3>
+            <ul class="list-disc pl-5">
+              <li><strong>평가원 1 : 직무 수행 능력 (max score: 15):</strong> ${example.ev_1_ability_15}</li>
+              <li><strong>평가원 1 : 직무 기초 능력 (max score: 10):</strong> ${example.ev_1_basic_1_10}</li>
+              <li><strong>평가원 1 : 직무 기초 능력 (max score: 10):</strong> ${example.ev_1_basic_2_10}</li>
+              <li><strong>평가원 2 : 직무 수행 능력 (max score: 15):</strong> ${example.ev_2_ability_15}</li>
+              <li><strong>평가원 2 : 직무 기초 능력 (max score: 10):</strong> ${example.ev_2_basic_1_10}</li>
+              <li><strong>평가원 2 : 직무 기초 능력 (max score: 10):</strong> ${example.ev_2_basic_2_10}</li>
+              <li><strong>평가원 2 : 핵심 가치 인재상 (max score: 15):</strong> ${example.ev_2_fit}</li>
+            </ul>
+          </div>
+        `;
+        modal.classList.remove("hidden");
+      }
+
+      document.getElementById("closeModal").addEventListener("click", () => {
+        document.getElementById("modal").classList.add("hidden");
+      });
+
+      // Optional: Close modal when clicking outside of it
+      document.getElementById("modal").addEventListener("click", (event) => {
+        if (event.target === event.currentTarget) {
+          event.currentTarget.classList.add("hidden");
+        }
+      });
+    </script>
+  </body>
+</html>
