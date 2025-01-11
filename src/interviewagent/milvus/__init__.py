@@ -13,14 +13,6 @@ def create_collection(collection_name: str, data_size: int, dim: int):
 
     # https://milvus.io/blog/select-index-parameters-ivf-index.md
     # 4 * sqrt(n)
-    nlist = int((data_size**0.5) * 4)
-    index_params.add_index(
-        field_name="embedding",
-        metric_type="COSINE",
-        index_type="IVF_FLAT",
-        index_name="vector_index",
-        params={"nlist": nlist},
-    )
 
     schema = MilvusClient.create_schema(
         auto_id=False,
@@ -50,6 +42,15 @@ def create_collection(collection_name: str, data_size: int, dim: int):
         datatype=DataType.FLOAT_VECTOR,
         dim=dim,
         description="embedding vector",
+    )
+
+    nlist = int((data_size**0.5) * 4)
+    index_params.add_index(
+        field_name="embedding",
+        metric_type="COSINE",
+        index_type="IVF_FLAT",
+        index_name="vector_index",
+        params={"nlist": nlist},
     )
 
     MILVUS.create_collection(

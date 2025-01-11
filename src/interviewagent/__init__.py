@@ -20,10 +20,10 @@ from interviewagent.milvus import (
 def insert_data(data: pd.DataFrame, collection_name: str):
     for index, row in tqdm(data.iterrows(), total=len(data)):
         text_chunks = [
-            row["질문1_답변"],
-            row["질문2_답변"],
-            row["질문3_답변"],
-            row["질문4_답변"],
+            row["answer_1"],
+            row["answer_2"],
+            row["answer_3"],
+            row["answer_4"],
         ]
         embeddings = get_embeddings(text_chunks)
         for i, embedding in enumerate(embeddings, start=1):
@@ -31,7 +31,7 @@ def insert_data(data: pd.DataFrame, collection_name: str):
                 collection_name=collection_name,
                 data=[
                     {
-                        "application_id": f"{row['수험번호']}",
+                        "application_id": f"{row['application_id']}",
                         "embedding": embedding,
                         "question_id": f"question_{i}",
                     }
